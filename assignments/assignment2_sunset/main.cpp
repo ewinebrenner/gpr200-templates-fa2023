@@ -9,43 +9,47 @@
 #include <imgui_impl_opengl3.h>
 
 #include <cl/shader.h>
+struct Vertex {
+	float x, y, z;
+	float u, v;
+};
 
 unsigned int createShader(GLenum shaderType, const char* sourceCode);
 unsigned int createShaderProgram(const char* vertexShaderSource, const char* fragmentShaderSource);
-unsigned int createVAO(float* vertexData, int numVertices);
+unsigned int createVAO(Vertex* vertexData, int numVertices, unsigned int* indicesData, int numIndices);
 void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 
 const int SCREEN_WIDTH = 1080;
 const int SCREEN_HEIGHT = 720;
 
-float vertices[9] = {
-	//x   //y  //z   
-	-0.5, -0.5, 0.0, 
-	 0.5, -0.5, 0.0,
-	 0.0,  0.5, 0.0 
+
+
+Vertex vertices[4] = {
+	  // x    y    z    u    v
+	{ -1.0, -1.0, 0.0, 0.0, 0.0 }, //bottom left
+	{  1.0, -1.0, 0.0, 1.0, 0.0 }, //bottom right
+	{  1.0,  1.0, 0.0, 1.0, 1.0 }, //top right
+	{ -1.0,  1.0, 0.0, 0.0, 1.0 }, //top left
 };
 
-//const char* vertexShaderSource = R"(
-//	#version 450
-//	layout(location = 0) in vec3 vPos;
-//	void main(){
-//		gl_Position = vec4(vPos,1.0);
-//	}
-//)";
-//
-//const char* fragmentShaderSource = R"(
-//	#version 450
-//	out vec4 FragColor;
-//	uniform vec3 _Color;
-//	uniform float _Brightness;
-//	void main(){
-//		FragColor = vec4(_Color * _Brightness,1.0);
-//	}
-//)";
+unsigned int indices[6] = {
+	0,1,2, // first triangle
+	2,3,0  // second triangle
+};
 
 float triangleColor[3] = { 1.0f, 0.5f, 0.0f };
 float triangleBrightness = 1.0f;
 bool showImGUIDemoWindow = true;
+
+float sunColorNight[3] = {0.8f, 0.2f, 0.2f};
+float sunColorDay[3] = {1.0f, 1.0f, 0.0f};
+float foregroundColor[3] = {0.1f, 0.1f, 0.1f};
+float skyColorBottomA[3] = {0.9f, 0.0f, 0.5f};
+float skyColorBottomB[3] = {0.2f, 0.0f, 0.6f};
+float skyColorTopA[3] = {0.0f, 0.0f, 1.0f};
+float skyColorTopB[3] = {0.0f, 1.0f, 1.0f};
+float radius = 0.5f;
+float sunSpeed = 1.0f;
 
 int main() {
 
@@ -74,13 +78,12 @@ int main() {
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init();
 
-	std::string vertexShaderSource = celLib::loadShaderSourceFromFile("assets/vertexShader.vert");
-	std::string fragmentShaderSource = celLib::loadShaderSourceFromFile("assets/fragmentShader.frag");
+	celLib::Shader shader("assets/vertexShader.vert", "assets/fragmentShader.frag");
+	shader.use();
+	
+	unsigned int vao = createVAO(vertices, 12, indices, 6);
 
-	unsigned int shader = createShaderProgram(vertexShaderSource.c_str(), fragmentShaderSource.c_str());
-	unsigned int vao = createVAO(vertices, 3);
-
-	glUseProgram(shader);
+	//glUseProgram(shader);
 	glBindVertexArray(vao);
 
 	while (!glfwWindowShouldClose(window)) {
@@ -89,10 +92,30 @@ int main() {
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		//Set uniforms
-		glUniform3f(glGetUniformLocation(shader, "_Color"), triangleColor[0], triangleColor[1], triangleColor[2]);
-		glUniform1f(glGetUniformLocation(shader,"_Brightness"), triangleBrightness);
+		float time = (float)glfwGetTime();
+		shader.setVec3("_Color", triangleColor[0], triangleColor[1], triangleColor[2]);
+		shader.setFloat("_Brightness", triangleBrightness);
+		shader.setVec2("_iResolution", SCREEN_WIDTH, SCREEN_HEIGHT);
+		shader.setFloat("_Time", time);
+		//set sun color
+		shader.setVec3("_sunColorNight", sunColorNight[0], sunColorNight[1], sunColorNight[2]);
+		shader.setVec3("_sunColorDay", sunColorDay[0], sunColorDay[1], sunColorDay[2]);
+		//set foreground color
+		shader.setVec3("_foregroundColor", foregroundColor[0], foregroundColor[1], foregroundColor[2]);
+		//set sky color
+		shader.setVec3("_skyColorNightA", skyColorBottomA[0], skyColorBottomA[1], skyColorBottomA[2]);
+		shader.setVec3("_skyColorNightB", skyColorBottomB[0], skyColorBottomB[1], skyColorBottomB[2]);
+		shader.setVec3("_skyColorDayA", skyColorTopA[0], skyColorTopA[1], skyColorTopA[2]);
+		shader.setVec3("_skyColorDayB", skyColorTopB[0], skyColorTopB[1], skyColorTopB[2]);
+		//set radius
+		shader.setFloat("_radius", radius);
+		//set speed
+		shader.setFloat("_sunSpeed", sunSpeed);
 
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+
+		//glDrawArrays(GL_TRIANGLES, 0, 6);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 		//Render UI
 		{
@@ -102,8 +125,20 @@ int main() {
 
 			ImGui::Begin("Settings");
 			ImGui::Checkbox("Show Demo Window", &showImGUIDemoWindow);
-			ImGui::ColorEdit3("Color", triangleColor);
-			ImGui::SliderFloat("Brightness", &triangleBrightness, 0.0f, 1.0f);
+
+			ImGui::ColorEdit3("Sun Color Night", sunColorNight);
+			ImGui::ColorEdit3("Sun Color Day", sunColorDay);
+
+			ImGui::ColorEdit3("Foreground Color", foregroundColor);
+
+			ImGui::ColorEdit3("Sky Color A (Day)", skyColorTopA);
+			ImGui::ColorEdit3("Sky Color B (Day)", skyColorTopB);
+			ImGui::ColorEdit3("Sky Color A (Night)", skyColorBottomA);
+			ImGui::ColorEdit3("Sky Color B (Night)", skyColorBottomB);
+
+			ImGui::SliderFloat("Radius", &radius, 0.0f, 1.0f);
+			ImGui::SliderFloat("Sun Speed", &sunSpeed, 0.0f, 2.0f);
+
 			ImGui::End();
 			if (showImGUIDemoWindow) {
 				ImGui::ShowDemoWindow(&showImGUIDemoWindow);
@@ -118,52 +153,16 @@ int main() {
 	printf("Shutting down...");
 }
 
-
-unsigned int createShader(GLenum shaderType, const char* sourceCode) {
-	//Create a new vertex shader object
-	unsigned int shader = glCreateShader(shaderType);
-	//Supply the shader object with source code
-	glShaderSource(shader, 1, &sourceCode, NULL);
-	//Compile the shader object
-	glCompileShader(shader);
-	int success;
-	glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-	if (!success) {
-		//512 is an arbitrary length, but should be plenty of characters for our error message.
-		char infoLog[512];
-		glGetShaderInfoLog(shader, 512, NULL, infoLog);
-		printf("Failed to compile shader: %s", infoLog);
-	}
-	return shader;
-}
-
-unsigned int createShaderProgram(const char* vertexShaderSource, const char* fragmentShaderSource) {
-	unsigned int vertexShader = createShader(GL_VERTEX_SHADER, vertexShaderSource);
-	unsigned int fragmentShader = createShader(GL_FRAGMENT_SHADER, fragmentShaderSource);
-
-	unsigned int shaderProgram = glCreateProgram();
-	//Attach each stage
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
-	//Link all the stages together
-	glLinkProgram(shaderProgram);
-	int success;
-	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-	if (!success) {
-		char infoLog[512];
-		glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-		printf("Failed to link shader program: %s", infoLog);
-	}
-	//The linked program now contains our compiled code, so we can delete these intermediate objects
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader);
-	return shaderProgram;
-}
-
-unsigned int createVAO(float* vertexData, int numVertices) {
+unsigned int createVAO(Vertex* vertexData, int numVertices, unsigned int* indicesData, int numIndices) {
 	unsigned int vao;
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
+
+	//EBO
+	unsigned int ebo;
+	glGenBuffers(1, &ebo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * numIndices, indicesData, GL_STATIC_DRAW);
 
 	//Define a new buffer id
 	unsigned int vbo;
@@ -173,8 +172,12 @@ unsigned int createVAO(float* vertexData, int numVertices) {
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * numVertices * 3, vertexData, GL_STATIC_DRAW);
 
 	//Position attribute
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (const void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const void*)(offsetof(Vertex,x)));
 	glEnableVertexAttribArray(0);
+
+	//UV
+	glVertexAttribPointer(1,2,GL_FLOAT,GL_FALSE,sizeof(Vertex), (const void*)(offsetof(Vertex,u)));
+	glEnableVertexAttribArray(1);
 
 	return vao;
 }
