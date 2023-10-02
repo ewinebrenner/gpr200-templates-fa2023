@@ -9,6 +9,7 @@
 #include <imgui_impl_opengl3.h>
 
 #include <ew/shader.h>
+#include <cl/Texture.h>
 
 struct Vertex {
 	float x, y, z;
@@ -31,6 +32,8 @@ unsigned short indices[6] = {
 	0, 1, 2,
 	2, 3, 0
 };
+
+
 
 int main() {
 	printf("Initializing...");
@@ -62,7 +65,15 @@ int main() {
 
 	unsigned int quadVAO = createVAO(vertices, 4, indices, 6);
 
+	unsigned int textureA = loadTexture("assets/bricks.jpg",GL_REPEAT,GL_LINEAR);
+	unsigned int textureB = loadTexture("assets/noise.png");
+
 	glBindVertexArray(quadVAO);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, textureA);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, textureB);
 
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
@@ -71,6 +82,11 @@ int main() {
 
 		//Set uniforms
 		shader.use();
+		shader.setInt("_brickTexture", 0);
+		shader.setInt("_noiseTexture",1);
+
+		float time = (float)glfwGetTime();
+		shader.setFloat("_time", time);
 
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, NULL);
 
