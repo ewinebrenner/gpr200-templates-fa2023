@@ -62,11 +62,14 @@ int main() {
 	ImGui_ImplOpenGL3_Init();
 
 	ew::Shader shader("assets/vertexShader.vert", "assets/fragmentShader.frag");
+	ew::Shader characterShader("assets/Character.vert", "assets/Character.frag");
 
 	unsigned int quadVAO = createVAO(vertices, 4, indices, 6);
 
 	unsigned int textureA = loadTexture("assets/bricks.jpg",GL_REPEAT,GL_LINEAR);
 	unsigned int textureB = loadTexture("assets/noise.png");
+
+	unsigned int characterTex = loadTexture("assets/sprite.png",GL_REPEAT,GL_NEAREST);
 
 	glBindVertexArray(quadVAO);
 
@@ -75,10 +78,15 @@ int main() {
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, textureB);
 
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, characterTex);
+
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
 		glClearColor(0.3f, 0.4f, 0.9f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
+
+
 
 		//Set uniforms
 		shader.use();
@@ -87,6 +95,14 @@ int main() {
 
 		float time = (float)glfwGetTime();
 		shader.setFloat("_time", time);
+
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, NULL);
+
+		characterShader.use();
+		characterShader.setInt("_characterTexture", 3);
+		
+		float cTime = (float)glfwGetTime();
+		characterShader.setFloat("_characterTime", cTime);
 
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, NULL);
 
