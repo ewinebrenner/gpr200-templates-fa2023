@@ -69,29 +69,27 @@ int main() {
 	unsigned int textureA = loadTexture("assets/bricks.jpg",GL_REPEAT,GL_LINEAR);
 	unsigned int textureB = loadTexture("assets/noise.png");
 
-	unsigned int characterTex = loadTexture("assets/sprite.png",GL_REPEAT,GL_NEAREST);
+	unsigned int characterTex = loadTexture("assets/sprite.png",GL_CLAMP_TO_EDGE,GL_NEAREST);
 
 	glBindVertexArray(quadVAO);
 
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, textureA);
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, textureB);
-
-	glActiveTexture(GL_TEXTURE3);
-	glBindTexture(GL_TEXTURE_2D, characterTex);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
 		glClearColor(0.3f, 0.4f, 0.9f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-
-
 		//Set uniforms
 		shader.use();
 		shader.setInt("_brickTexture", 0);
 		shader.setInt("_noiseTexture",1);
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, textureA);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, textureB);
 
 		float time = (float)glfwGetTime();
 		shader.setFloat("_time", time);
@@ -99,10 +97,15 @@ int main() {
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, NULL);
 
 		characterShader.use();
-		characterShader.setInt("_characterTexture", 3);
+		characterShader.setInt("_characterTexture", 0);
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, characterTex);
 		
 		float cTime = (float)glfwGetTime();
+		float tiles = 1.0;
 		characterShader.setFloat("_characterTime", cTime);
+		characterShader.setFloat("_tileAmount", tiles);
 
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, NULL);
 
@@ -113,6 +116,7 @@ int main() {
 			ImGui::NewFrame();
 
 			ImGui::Begin("Settings");
+			//ImGui::SliderFloat("Tiles", tiles);
 			ImGui::End();
 
 			ImGui::Render();

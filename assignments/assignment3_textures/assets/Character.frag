@@ -4,8 +4,9 @@ in vec2 UV;
 
 uniform sampler2D _characterTexture;
 uniform float _characterTime;
+uniform float _tileAmount;
 
 void main(){
 	//FragColor = vec4(UV.x,UV.y,0.0,1.0);
-	FragColor = texture(_characterTexture, UV * 2.0);
+	FragColor = texture(_characterTexture, UV);
 }
