@@ -68,8 +68,12 @@ int main() {
 
 	unsigned int textureA = loadTexture("assets/bricks.jpg",GL_REPEAT,GL_LINEAR);
 	unsigned int textureB = loadTexture("assets/noise.png");
+	unsigned int textureC = loadTexture("assets/extra.png",GL_REPEAT, GL_NEAREST);
 
 	unsigned int characterTex = loadTexture("assets/sprite.png",GL_CLAMP_TO_BORDER,GL_NEAREST);
+
+	float charScale = 2.0;
+	float charSpeed = 1.0;
 
 	glBindVertexArray(quadVAO);
 
@@ -85,11 +89,14 @@ int main() {
 		shader.use();
 		shader.setInt("_brickTexture", 0);
 		shader.setInt("_noiseTexture",1);
+		shader.setInt("_extraTexture",2);
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, textureA);
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, textureB);
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, textureC);
 
 		float time = (float)glfwGetTime();
 		shader.setFloat("_time", time);
@@ -106,7 +113,9 @@ int main() {
 		float tiles = 1.0;
 		characterShader.setFloat("_characterTime", cTime);
 		characterShader.setFloat("_time", cTime);
-		characterShader.setFloat("_tileAmount", tiles);
+		characterShader.setFloat("_scale",charScale);
+		characterShader.setFloat("_speed", charSpeed);
+
 
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, NULL);
 
@@ -117,7 +126,8 @@ int main() {
 			ImGui::NewFrame();
 
 			ImGui::Begin("Settings");
-			//ImGui::SliderFloat("Tiles", tiles);
+			ImGui::SliderFloat("Scale", &charScale, 2.0, 10.0);
+			ImGui::SliderFloat("Speed", &charSpeed,0.1,5.0);
 			ImGui::End();
 
 			ImGui::Render();
