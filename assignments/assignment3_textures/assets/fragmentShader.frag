@@ -8,6 +8,6 @@ uniform float _time;
 
 void main(){
 	//FragColor = vec4(UV.x,UV.y,0.0,1.0);
-	vec4 movingNoise = texture(_noiseTexture, vec2(sin(UV.x * 6.28 + _time), UV.y));
+	vec4 movingNoise = texture(_noiseTexture, vec2(sin(UV.x  + _time), UV.y + _time));
 	FragColor = mix(texture(_brickTexture, UV), movingNoise, 0.7);
 }

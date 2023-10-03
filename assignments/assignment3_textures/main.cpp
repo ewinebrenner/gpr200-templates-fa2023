@@ -69,7 +69,7 @@ int main() {
 	unsigned int textureA = loadTexture("assets/bricks.jpg",GL_REPEAT,GL_LINEAR);
 	unsigned int textureB = loadTexture("assets/noise.png");
 
-	unsigned int characterTex = loadTexture("assets/sprite.png",GL_CLAMP_TO_EDGE,GL_NEAREST);
+	unsigned int characterTex = loadTexture("assets/sprite.png",GL_CLAMP_TO_BORDER,GL_NEAREST);
 
 	glBindVertexArray(quadVAO);
 
@@ -105,6 +105,7 @@ int main() {
 		float cTime = (float)glfwGetTime();
 		float tiles = 1.0;
 		characterShader.setFloat("_characterTime", cTime);
+		characterShader.setFloat("_time", cTime);
 		characterShader.setFloat("_tileAmount", tiles);
 
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, NULL);
