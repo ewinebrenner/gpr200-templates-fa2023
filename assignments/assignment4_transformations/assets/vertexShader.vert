@@ -7,5 +7,6 @@ uniform mat4 _Model;
 
 void main(){
 	Normal = vNormal;
-	gl_Position = vec4(vPos,1.0);
+	gl_Position = _Model * vec4(vPos,1.0);
+	gl_Position.z *= -1.0;
 }

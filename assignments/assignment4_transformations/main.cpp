@@ -82,6 +82,9 @@ int main() {
 			ImGui::NewFrame();
 
 			ImGui::Begin("Transform");
+			ImGui::DragFloat3("Position", &transform.position.x, 0.05f );
+			ImGui::DragFloat3("Rotation", &transform.rotation.x, 1.0f);
+			ImGui::DragFloat3("Scale", &transform.scale.x, 0.05f);
 			ImGui::End();
 
 			ImGui::Render();
