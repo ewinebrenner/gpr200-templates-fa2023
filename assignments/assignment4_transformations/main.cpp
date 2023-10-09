@@ -20,6 +20,8 @@ void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 const int SCREEN_WIDTH = 720;
 const int SCREEN_HEIGHT = 720;
 
+const int NUM_MODELS = 4;
+
 int main() {
 	printf("Initializing...");
 	if (!glfwInit()) {
@@ -58,7 +60,12 @@ int main() {
 	//Cube mesh
 	ew::Mesh cubeMesh(ew::createCube(0.5f));
 
-	celLib::Transform transform;
+	//celLib::Transform transform;
+	celLib::Transform transforms[NUM_MODELS];
+	transforms[0].position = ew::Vec3(-0.5f, 0.5f, 0.0f);
+	transforms[1].position = ew::Vec3(0.5f, 0.5f, 0.0f);
+	transforms[2].position = ew::Vec3(-0.5f, -0.5f, 0.0f);
+	transforms[3].position = ew::Vec3(0.5f, -0.5f, 0.0f);
 
 	
 	while (!glfwWindowShouldClose(window)) {
@@ -70,10 +77,13 @@ int main() {
 		//Set uniforms
 		shader.use();
 
+		
 		//TODO: Set model matrix uniform
-		shader.setMat4("_Model", transform.getModelMatrix());
-
-		cubeMesh.draw();
+		for (int i = 0; i < NUM_MODELS; i++) 
+		{
+			shader.setMat4("_Model", transforms[i].getModelMatrix());
+			cubeMesh.draw();
+		}
 
 		//Render UI
 		{
@@ -82,9 +92,17 @@ int main() {
 			ImGui::NewFrame();
 
 			ImGui::Begin("Transform");
-			ImGui::DragFloat3("Position", &transform.position.x, 0.05f );
-			ImGui::DragFloat3("Rotation", &transform.rotation.x, 1.0f);
-			ImGui::DragFloat3("Scale", &transform.scale.x, 0.05f);
+			for (size_t i = 0; i < NUM_MODELS; i++) 
+			{
+				ImGui::PushID(i);
+				if (ImGui::CollapsingHeader("Transform"))
+				{
+					ImGui::DragFloat3("Position", &transforms[i].position.x, 0.05f);
+					ImGui::DragFloat3("Rotation", &transforms[i].rotation.x, 0.05f);
+					ImGui::DragFloat3("Scale", &transforms[i].scale.x, 0.05f);
+				}
+				ImGui::PopID();
+			}
 			ImGui::End();
 
 			ImGui::Render();
