@@ -11,6 +11,8 @@
 #include <ew/shader.h>
 #include <ew/procGen.h>
 #include <ew/transform.h>
+#include <cl/Camera.h>
+
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 
@@ -20,6 +22,8 @@ const int SCREEN_HEIGHT = 720;
 
 const int NUM_CUBES = 4;
 ew::Transform cubeTransforms[NUM_CUBES];
+
+celLib::Camera cam;
 
 int main() {
 	printf("Initializing...");
@@ -59,6 +63,30 @@ int main() {
 	//Cube mesh
 	ew::Mesh cubeMesh(ew::createCube(0.5f));
 
+	//Camera settings
+	ew::Vec3 defaultPos = ew::Vec3(0, 0, 5);
+	cam.position = defaultPos;
+
+	ew::Vec3 defaultTarget = ew::Vec3(0,0,0);
+	cam.target = defaultTarget;
+
+	float defaultFOV = 60;
+	cam.fov = defaultFOV;
+
+	cam.aspectRatio = (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT;
+
+	float defaultNearPlane = 0.1;
+	cam.nearPlane = defaultNearPlane;
+
+	float defaultFarPlane = 100;
+	cam.farPlane = defaultFarPlane;
+
+	bool defaultOrthographic = false;
+	cam.orthographic = defaultOrthographic;
+
+	float defaultOrthoSize = 6;
+	cam.orthoSize = defaultOrthoSize;
+
 	//Cube positions
 	for (size_t i = 0; i < NUM_CUBES; i++)
 	{
@@ -75,6 +103,9 @@ int main() {
 		//Set uniforms
 		shader.use();
 
+		shader.setMat4("_Projection", cam.ProjectionMatrix());
+		shader.setMat4("_View", cam.ViewMatrix());
+		
 		//TODO: Set model matrix uniform
 		for (size_t i = 0; i < NUM_CUBES; i++)
 		{
@@ -102,6 +133,24 @@ int main() {
 				ImGui::PopID();
 			}
 			ImGui::Text("Camera");
+			ImGui::DragFloat3("Position", &cam.position.x, 0.05f);
+			ImGui::DragFloat3("Target", &cam.target.x, 0.05f);
+			ImGui::Checkbox("Orthographic", &cam.orthographic);
+			ImGui::DragFloat("FOV", &cam.fov, 0.05f);
+			ImGui::DragFloat("Near Plane", &cam.nearPlane, 0.05f);
+			ImGui::DragFloat("Far Plane", &cam.farPlane, 0.05f);
+			//Reset button
+			//ImGui::Button("Reset");
+			if (ImGui::Button("Reset"))
+			{
+				cam.position = defaultPos;
+				cam.target = defaultTarget;
+				cam.fov = defaultFOV;
+				cam.nearPlane = defaultNearPlane;
+				cam.farPlane = defaultFarPlane;
+				cam.orthographic = defaultOrthographic;
+				cam.orthoSize = defaultOrthoSize;
+			}
 			ImGui::End();
 			
 			ImGui::Render();

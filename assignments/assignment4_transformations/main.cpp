@@ -22,6 +22,7 @@ const int SCREEN_HEIGHT = 720;
 
 const int NUM_MODELS = 4;
 
+
 int main() {
 	printf("Initializing...");
 	if (!glfwInit()) {
