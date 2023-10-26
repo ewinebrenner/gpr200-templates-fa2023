@@ -175,6 +175,17 @@ int main() {
 
 void moveCamera(GLFWwindow* window, celLib::Camera* camera, celLib::CameraControls* controls) 
 {
+	ew::Vec3 worldUp = ew::Vec3(0, 1, 0);
+
+	float yaw = -90.0f;
+	float pitch = 0.0f;
+
+	float deltaTime = 0.0f;
+	float lastFrame = 0.0f;
+
+	controls->prevMouseX = SCREEN_WIDTH / 2;
+	controls->prevMouseY = SCREEN_HEIGHT / 2;
+
 	//If right mouse is not held, release cursor and return early
 	if (!glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_2)) 
 	{
@@ -195,16 +206,51 @@ void moveCamera(GLFWwindow* window, celLib::Camera* camera, celLib::CameraContro
 		controls->prevMouseY = mouseY;
 	}
 
-	//TODO: Get mouse position delta for this frame
-	//TODO: Add to yaw and pitch
-	//TODO: Clamp pitch between -89 and 89 degrees
+	// Get mouse position delta for this frame
+	float mouseSensitivity = 0.5f;
+	float mouseDeltaX = (mouseX - controls->prevMouseX)*mouseSensitivity;
+	float mouseDeltaY = (mouseY - controls->prevMouseY)*mouseSensitivity;
+	
+	// Add to yaw and pitch
+	yaw += mouseDeltaX;
+	pitch += mouseDeltaY;
+	
+	// Clamp pitch between -89 and 89 degrees
+	if (pitch > 89.0f) 
+	{
+		pitch = 89.0f;
+	}
+	if (pitch < -89.0f) 
+	{
+		pitch = -89.0f;
+	}
 
 	//Remember previous mouse position
 	controls->prevMouseX = mouseX;
 	controls->prevMouseY = mouseY;
 
-	//TODO: construct forward vector using yaw and pitch. Don't forget to convert to radians
+	// construct forward vector using yaw and pitch. Don't forget to convert to radians
 	//ew::Vec3 forward = ???
+	float yawRad = (yaw * 3.14) / 180;
+	float pitchRad = (pitch * 3.14) / 180;
+	ew::Vec3 forward = ew::Vec3(cos(yawRad) * cos(pitchRad), sin(pitchRad), sin(yawRad)* cos(pitchRad));
+
+	ew::Vec3 normalForward = ew::Normalize(forward);
+	ew::Vec3 right = ew::Normalize(ew::Cross(normalForward, ew::Normalize(worldUp)));
+	ew::Vec3 up = ew::Normalize(ew::Cross(right, normalForward));
+
+	if (glfwGetKey(window, GLFW_KEY_W)) 
+	{
+		camera->position += normalForward * controls->moveSpeed * deltaTime;
+	}
+	
+
+	//cam.position += forward * controls->moveSpeed * deltaTime;
+	camera->target = camera->position + forward;
+
+	float currentFrame = glfwGetTime();
+	deltaTime = currentFrame - lastFrame;
+	lastFrame = currentFrame;
 
 
 }
