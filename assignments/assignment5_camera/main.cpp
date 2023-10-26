@@ -26,7 +26,7 @@ ew::Transform cubeTransforms[NUM_CUBES];
 celLib::Camera cam;
 celLib::CameraControls camControls;
 
-void moveCamera(GLFWwindow* window, celLib::Camera* camera, celLib::CameraControls* controls);
+void moveCamera(GLFWwindow* window, celLib::Camera* camera, celLib::CameraControls* controls, float dt);
 
 int main() {
 	printf("Initializing...");
@@ -102,9 +102,15 @@ int main() {
 		cubeTransforms[i].position.y = i / (NUM_CUBES / 2) - 0.5;
 	}
 
+	float prevTime = 0.0f;
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
-		moveCamera(window, &cam , &camControls);
+
+		float time = (float)glfwGetTime();
+		float deltaTime = time - prevTime;
+		prevTime = time;
+
+		moveCamera(window, &cam , &camControls, deltaTime);
 		glClearColor(0.3f, 0.4f, 0.9f, 1.0f);
 		//Clear both color buffer AND depth buffer
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -173,15 +179,12 @@ int main() {
 	printf("Shutting down...");
 }
 
-void moveCamera(GLFWwindow* window, celLib::Camera* camera, celLib::CameraControls* controls) 
+void moveCamera(GLFWwindow* window, celLib::Camera* camera, celLib::CameraControls* controls, float dt) 
 {
 	ew::Vec3 worldUp = ew::Vec3(0, 1, 0);
 
 	float yaw = -90.0f;
 	float pitch = 0.0f;
-
-	float deltaTime = 0.0f;
-	float lastFrame = 0.0f;
 
 	controls->prevMouseX = SCREEN_WIDTH / 2;
 	controls->prevMouseY = SCREEN_HEIGHT / 2;
@@ -209,7 +212,7 @@ void moveCamera(GLFWwindow* window, celLib::Camera* camera, celLib::CameraContro
 	// Get mouse position delta for this frame
 	float mouseSensitivity = 0.5f;
 	float mouseDeltaX = (mouseX - controls->prevMouseX)*mouseSensitivity;
-	float mouseDeltaY = (mouseY - controls->prevMouseY)*mouseSensitivity;
+	float mouseDeltaY = (controls->prevMouseY - mouseY)*mouseSensitivity;
 	
 	// Add to yaw and pitch
 	yaw += mouseDeltaX;
@@ -239,18 +242,33 @@ void moveCamera(GLFWwindow* window, celLib::Camera* camera, celLib::CameraContro
 	ew::Vec3 right = ew::Normalize(ew::Cross(normalForward, ew::Normalize(worldUp)));
 	ew::Vec3 up = ew::Normalize(ew::Cross(right, normalForward));
 
-	if (glfwGetKey(window, GLFW_KEY_W)) 
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) 
 	{
-		camera->position += normalForward * controls->moveSpeed * deltaTime;
+		camera->position += normalForward * controls->moveSpeed * dt;
 	}
-	
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) 
+	{
+		camera->position += -normalForward * controls->moveSpeed * dt;
+	}
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) 
+	{
+		camera->position += right * controls->moveSpeed * dt;
+	}
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) 
+	{
+		camera->position += -right * controls->moveSpeed * dt;
+	}
+	if (glfwGetKey(window,GLFW_KEY_E) == GLFW_PRESS ) 
+	{
+		camera->position += up * controls->moveSpeed * dt;
+	}
+	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) 
+	{
+		camera->position += -up * controls->moveSpeed * dt;
+	}
 
 	//cam.position += forward * controls->moveSpeed * deltaTime;
 	camera->target = camera->position + forward;
-
-	float currentFrame = glfwGetTime();
-	deltaTime = currentFrame - lastFrame;
-	lastFrame = currentFrame;
 
 
 }
