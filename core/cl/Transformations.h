@@ -84,11 +84,52 @@ namespace celLib {
 			//for rotation, rotate around the Z axis, then X axis, then Y axis
 			//Matrix multiplication goes from right to left
 
-			ew::Mat4 scaleMatrix = Scale(scale);
+			ew::Mat4 scaleMatrix = celLib::Scale(scale);  //ambiguous call to overloaded function
 			ew::Mat4 rotMatrix = RotateZ(rotation.z) * RotateX(rotation.x) * RotateY(rotation.y);
-			ew::Mat4 transMatrix = Translate(position);
+			ew::Mat4 transMatrix = celLib::Translate(position);
 			ew::Mat4 modelMatrix = transMatrix * rotMatrix * scaleMatrix;
 			return modelMatrix;
 		}
+	};
+
+	inline ew::Mat4 LookAt(ew::Vec3 eye, ew::Vec3 target, ew::Vec3 up)
+	{
+		//use ew::Cross for cross product!
+		//T^-1eye * R^-1eye = viewMatrix
+		ew::Vec3 forward = ew::Normalize(eye - target); 
+		ew::Vec3 right = ew::Normalize(ew::Cross(up,forward));
+		ew::Vec3 newUp = ew::Normalize(ew::Cross(forward, right));
+		ew::Mat4 rotInverse = ew::Mat4(right.x, right.y, right.z, 0,
+									   newUp.x, newUp.y, newUp.z, 0,
+									   forward.x, forward.y, forward.z, 0,
+									   0, 0, 0, 1);
+		ew::Mat4 transInverse = ew::Mat4(1, 0, 0, -eye.x,
+										 0, 1, 0, -eye.y, 
+										 0, 0, 1, -eye.z, 
+										 0, 0, 0, 1);
+		return rotInverse * transInverse;
+
+	};
+	//Orthographic Projection
+	inline ew::Mat4 Orthographic(float height, float aspect, float near, float far)
+	{
+		//left(l) = near, right(r) = far, bottom(b) = -height, top(t) = height, near(n) , far(f)
+		float right = (aspect * height)/2; //aspect / height * height?
+		float left = -right / 2;
+		float bottom = -height/2;
+		float top = height/2;
+		return ew::Mat4(2/(right - left), 0, 0, -(right + left)/(right - left),
+					    0, 2/(top - bottom), 0, -(top+bottom)/(top-bottom),
+						0, 0, -2/(far - near), -(far+near)/(far-near),
+				        0, 0, 0, 1);
+	};
+	// fov = vertical aspect ratio (radians)
+	inline ew::Mat4 Perspective(float fov, float aspect, float near, float far)
+	{
+		//x,y,z,w
+		return ew::Mat4(1/(tan(fov/2)*aspect), 0, 0, 0,
+					    0, 1/(tan(fov/2)), 0, 0,
+					    0, 0, (near+far)/(near-far), (2*far*near)/(near-far),
+						0, 0, -1, 0);
 	};
 }

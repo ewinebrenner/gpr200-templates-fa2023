@@ -24,6 +24,9 @@ const int NUM_CUBES = 4;
 ew::Transform cubeTransforms[NUM_CUBES];
 
 celLib::Camera cam;
+celLib::CameraControls camControls;
+
+void moveCamera(GLFWwindow* window, celLib::Camera* camera, celLib::CameraControls* controls);
 
 int main() {
 	printf("Initializing...");
@@ -87,6 +90,11 @@ int main() {
 	float defaultOrthoSize = 6;
 	cam.orthoSize = defaultOrthoSize;
 
+	bool orbit = false;
+	cam.orbiting = orbit;
+
+	float defaultOrbitSpeed = 0.5f;
+
 	//Cube positions
 	for (size_t i = 0; i < NUM_CUBES; i++)
 	{
@@ -96,6 +104,7 @@ int main() {
 
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
+		moveCamera(window, &cam , &camControls);
 		glClearColor(0.3f, 0.4f, 0.9f, 1.0f);
 		//Clear both color buffer AND depth buffer
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -133,6 +142,8 @@ int main() {
 				ImGui::PopID();
 			}
 			ImGui::Text("Camera");
+			ImGui::Checkbox("Orbit", &cam.orbiting); 
+			ImGui::DragFloat("Orbit Speed", &cam.orbitSpeed,defaultOrbitSpeed,0.0f, 10.0f);
 			ImGui::DragFloat3("Position", &cam.position.x, 0.05f);
 			ImGui::DragFloat3("Target", &cam.target.x, 0.05f);
 			ImGui::Checkbox("Orthographic", &cam.orthographic);
@@ -160,6 +171,42 @@ int main() {
 		glfwSwapBuffers(window);
 	}
 	printf("Shutting down...");
+}
+
+void moveCamera(GLFWwindow* window, celLib::Camera* camera, celLib::CameraControls* controls) 
+{
+	//If right mouse is not held, release cursor and return early
+	if (!glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_2)) 
+	{
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		controls->firstMouse = true;
+		return;
+	}
+
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+	double mouseX, mouseY;
+	glfwGetCursorPos(window, &mouseX, &mouseY);
+
+	if (controls->firstMouse) 
+	{
+		controls->firstMouse = false;
+		controls->prevMouseX = mouseX;
+		controls->prevMouseY = mouseY;
+	}
+
+	//TODO: Get mouse position delta for this frame
+	//TODO: Add to yaw and pitch
+	//TODO: Clamp pitch between -89 and 89 degrees
+
+	//Remember previous mouse position
+	controls->prevMouseX = mouseX;
+	controls->prevMouseY = mouseY;
+
+	//TODO: construct forward vector using yaw and pitch. Don't forget to convert to radians
+	//ew::Vec3 forward = ???
+
+
 }
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height)
