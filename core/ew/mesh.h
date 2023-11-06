@@ -4,6 +4,7 @@
 
 #pragma once
 #include "ewMath/ewMath.h"
+#include "ewMath/vec3.h"
 
 namespace ew {
 	struct Vertex {
