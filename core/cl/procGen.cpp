@@ -77,6 +77,7 @@ namespace celLib
 			v.pos.x = std::cos(theta) * radius;
 			v.pos.y = topY;
 			v.pos.z = std::sin(theta) * radius;
+			v.normal = ew::Vec3(0,1,0);
 			returnValue.vertices.push_back(v);
 		}
 		//Bottom ring
@@ -145,6 +146,11 @@ namespace celLib
 			{
 				v.pos.x = width * (col / subdivisions);
 				v.pos.z = -height * (row / subdivisions);
+				v.normal = ew::Normalize(ew::Vec3(0, 1, 0));
+				ew::Vec2 uv;
+				uv.x = col / subdivisions;
+				uv.y = row / subdivisions;
+				v.uv = uv;
 				returnValue.vertices.push_back(v);
 			}
 		}
