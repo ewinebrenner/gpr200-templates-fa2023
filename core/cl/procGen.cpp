@@ -69,6 +69,7 @@ namespace celLib
 		v.pos.x = 0;
 		v.pos.y = topY;
 		v.pos.z = 0;
+		v.normal = ew::Vec3(0,1,0);
 		returnValue.vertices.push_back(v);
 		//Top ring
 		for (int i = 0; i <= numSegments; i++) 
@@ -77,7 +78,17 @@ namespace celLib
 			v.pos.x = std::cos(theta) * radius;
 			v.pos.y = topY;
 			v.pos.z = std::sin(theta) * radius;
-			v.normal = ew::Vec3(0,1,0);
+			v.normal = ew::Vec3(0,topY,0);
+			returnValue.vertices.push_back(v);
+		}
+		//Top ring 2
+		for (int i2 = 0; i2 <= numSegments; i2++) 
+		{
+			theta = i2 * thetaStep;
+			v.pos.x = std::cos(theta) * radius;
+			v.pos.y = topY;
+			v.pos.z = std::sin(theta) * radius;
+			v.normal = ew::Vec3(std::cos(theta), 0, std::sin(theta));
 			returnValue.vertices.push_back(v);
 		}
 		//Bottom ring
@@ -87,27 +98,39 @@ namespace celLib
 			v.pos.x = std::cos(theta) * radius;
 			v.pos.y = bottomY;
 			v.pos.z = std::sin(theta) * radius;
+			v.normal = ew::Vec3(std::cos(theta), 0, std::sin(theta));
+			returnValue.vertices.push_back(v);
+			
+		}
+		for (int j2 = 0; j2 <= numSegments; j2++) 
+		{
+			theta = j2 * thetaStep;
+			v.pos.x = std::cos(theta) * radius;
+			v.pos.y = bottomY;
+			v.pos.z = std::sin(theta) * radius;
+			v.normal = ew::Vec3(0, bottomY, 0);
 			returnValue.vertices.push_back(v);
 		}
 		//Bottom center
 		v.pos.x = 0;
 		v.pos.y = bottomY;
 		v.pos.z = 0;
+		v.normal = ew::Vec3(0,-1,0);
 		returnValue.vertices.push_back(v);
 
 		//indices
 		//cap
 		int start = 1;
 		int center = 0;
-		for (int i = 0; i < numSegments; i++)
+		for (int i = 0; i < numSegments*2 + 1; i++)
 		{
 			returnValue.indices.push_back(start + i);
 			returnValue.indices.push_back(center);
 			returnValue.indices.push_back(start + i + 1);
 		}
 		//side indices
-		int sideStart = 1;
-		int columns = numSegments + 1;
+		int sideStart = numSegments+2;
+		int columns = numSegments+1;
 		for (int i = 0; i < columns; i++)
 		{
 			start = sideStart + i;
@@ -125,7 +148,7 @@ namespace celLib
 		center = returnValue.vertices.size() -1;
 		start = returnValue.vertices.size() - 2;
 
-		for (int i = 0; i < numSegments; i++)
+		for (int i = 0; i < numSegments*2; i++)
 		{
 			returnValue.indices.push_back(start - i);
 			returnValue.indices.push_back(center);
