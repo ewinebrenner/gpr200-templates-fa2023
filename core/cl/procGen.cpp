@@ -52,6 +52,15 @@ namespace celLib
 			}
 		}
 
+		poleStart = numSegments*(numSegments+1);
+		sideStart = (numSegments*numSegments)-1;
+		for (int i = 0; i < numSegments; i++) 
+		{
+			returnValue.indices.push_back(sideStart + i + 1);
+			returnValue.indices.push_back(poleStart+i);
+			returnValue.indices.push_back(sideStart + i);
+		}
+
 		return returnValue;
 	}
 
@@ -60,6 +69,7 @@ namespace celLib
 		//TODO: fill out function
 		ew::Vertex v;
 		ew::MeshData returnValue;
+		ew::Vec2 uv = ew::Vec2(0, 0);
 		float topY = height / 2;
 		float bottomY = -topY;
 		float thetaStep = (ew::TAU) / numSegments;
@@ -70,6 +80,7 @@ namespace celLib
 		v.pos.y = topY;
 		v.pos.z = 0;
 		v.normal = ew::Vec3(0,1,0);
+		v.uv = uv;
 		returnValue.vertices.push_back(v);
 		//Top ring
 		for (int i = 0; i <= numSegments; i++) 
@@ -78,6 +89,9 @@ namespace celLib
 			v.pos.x = std::cos(theta) * radius;
 			v.pos.y = topY;
 			v.pos.z = std::sin(theta) * radius;
+			uv.x = std::cos(theta);
+			uv.y = std::sin(theta);
+			v.uv = uv;
 			v.normal = ew::Vec3(0,topY,0);
 			returnValue.vertices.push_back(v);
 		}
