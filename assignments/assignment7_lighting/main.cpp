@@ -103,7 +103,11 @@ int main() {
 	defaultLight.color = defaultLightColor;
 	defaultLight.position = defaultLightPosition;
 
-	float ambientStrength = 0.1;
+	Material material;
+	material.ambientK = 0.1;
+	material.shininess = 0;
+	material.specular = 0.5;
+	material.diffuseK = 1.0;
 
 	resetCamera(camera,cameraController);
 
@@ -142,7 +146,12 @@ int main() {
 
 		shader.setVec3("_Light.position", defaultLightPosition);
 		shader.setVec3("_Light.color", defaultLightColor);
-		shader.setFloat("_AmbientStrength", ambientStrength);
+		shader.setFloat("_AmbientStrength", material.ambientK);
+		shader.setFloat("_SpecularStrength", material.specular);
+		shader.setFloat("_Shininess", material.shininess);
+		shader.setFloat("_DiffuseStrength", material.diffuseK);
+
+		shader.setVec3("_ViewPos", camera.position);
 
 		//TODO: Render point lights
 		unlitShader.use();
@@ -178,7 +187,10 @@ int main() {
 			}
 
 			ImGui::ColorEdit3("BG color", &bgColor.x);
-			ImGui::DragFloat("Ambient", &ambientStrength, 0.01f ,0.1f, 1.0f);
+			ImGui::DragFloat("Ambient", &material.ambientK, 0.01f ,0.0f, 1.0f);
+			ImGui::DragFloat("Diffuse", &material.diffuseK, 0.01f, 0.0, 1.0f);
+			ImGui::DragFloat("Specular", &material.specular, 0.01f, 0.0f, 1.0f);
+			ImGui::DragFloat("Shininess", &material.shininess, 1.0f, 0.0f, 256.0f);
 			ImGui::End();
 			
 			ImGui::Render();
