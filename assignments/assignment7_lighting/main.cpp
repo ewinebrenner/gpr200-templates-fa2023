@@ -84,6 +84,7 @@ int main() {
 	ew::Mesh cylinderMesh(ew::createCylinder(0.5f, 1.0f, 32));
 
 	ew::Mesh sphereLightMesh(ew::createSphere(0.2,64));
+	ew::Mesh red_sphereLightMesh(ew::createSphere(0.2,64));
 
 	//Initialize transforms
 	ew::Transform cubeTransform;
@@ -98,14 +99,26 @@ int main() {
 	ew::Transform sphereLightTransform;
 	sphereLightTransform.position = defaultLightPosition;
 
+	ew::Vec3 redLightPosition = ew::Vec3(1.0f, 2.0f, 0.0f);
+	ew::Transform redLightTransform;
+	redLightTransform.position = redLightPosition;
+
 	ew::Vec3 defaultLightColor = ew::Vec3(1.0,1.0,1.0);
 	Light defaultLight;
 	defaultLight.color = defaultLightColor;
 	defaultLight.position = defaultLightPosition;
 
+	ew::Vec3 redLightColor = ew::Vec3(1.0,0.0,0.0);
+	Light redLight; 
+	redLight.color = redLightColor;
+	redLight.position = redLightPosition;
+
+	//Need to create an array of colors and positions to swap out in the render loop
+	
+
 	Material material;
 	material.ambientK = 0.1;
-	material.shininess = 0;
+	material.shininess = 32;
 	material.specular = 0.5;
 	material.diffuseK = 1.0;
 
@@ -159,6 +172,9 @@ int main() {
 		unlitShader.setMat4("_Model", sphereLightTransform.getModelMatrix());
 		unlitShader.setVec3("_Color",defaultLightColor);
 		sphereLightMesh.draw();
+		unlitShader.setMat4("_Model", redLightTransform.getModelMatrix());
+		unlitShader.setVec3("_Color", redLightColor);
+		red_sphereLightMesh.draw();
 
 		//Render UI
 		{
