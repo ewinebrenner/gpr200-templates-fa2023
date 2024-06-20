@@ -15,7 +15,7 @@ set(CORE_INC_DIR
  CACHE PATH "CORE INCLUDE SOURCE PATH"
 )
 
-add_library(core STATIC ${CORE_SRC} ${CORE_INC})
+add_library(core STATIC ${CORE_SRC} ${CORE_INC} "cl/Camera.h" "cl/procGen.h" "cl/procGen.cpp")
 
 find_package(OpenGL REQUIRED)
 

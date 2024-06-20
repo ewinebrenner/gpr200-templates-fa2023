@@ -27,6 +27,20 @@ ew::Vec3 bgColor = ew::Vec3(0.1f);
 ew::Camera camera;
 ew::CameraController cameraController;
 
+struct Light 
+{
+	ew::Vec3 position; // world space
+	ew::Vec3 color;	   // RGB
+};
+
+struct Material 
+{
+	float ambientK; // Ambient coefficient (0-1)
+	float diffuseK; // Diffuse coefficient (0-1)
+	float specular; // Specular coefficient (0-1)
+	float shininess; // Shininess
+};
+
 int main() {
 	printf("Initializing...");
 	if (!glfwInit()) {
@@ -58,6 +72,8 @@ int main() {
 	glCullFace(GL_BACK);
 	glEnable(GL_DEPTH_TEST);
 
+	ew::Shader unlitShader("assets/unlit.vert","assets/unlit.frag");
+
 	ew::Shader shader("assets/defaultLit.vert", "assets/defaultLit.frag");
 	unsigned int brickTexture = ew::loadTexture("assets/brick_color.jpg",GL_REPEAT,GL_LINEAR);
 
@@ -67,6 +83,9 @@ int main() {
 	ew::Mesh sphereMesh(ew::createSphere(0.5f, 64));
 	ew::Mesh cylinderMesh(ew::createCylinder(0.5f, 1.0f, 32));
 
+	ew::Mesh sphereLightMesh(ew::createSphere(0.2,64));
+	ew::Mesh red_sphereLightMesh(ew::createSphere(0.2,64));
+
 	//Initialize transforms
 	ew::Transform cubeTransform;
 	ew::Transform planeTransform;
@@ -75,6 +94,33 @@ int main() {
 	planeTransform.position = ew::Vec3(0, -1.0, 0);
 	sphereTransform.position = ew::Vec3(-1.5f, 0.0f, 0.0f);
 	cylinderTransform.position = ew::Vec3(1.5f, 0.0f, 0.0f);
+
+	ew::Vec3 defaultLightPosition = ew::Vec3(0.0, 2.0f, 0.0f);
+	ew::Transform sphereLightTransform;
+	sphereLightTransform.position = defaultLightPosition;
+
+	ew::Vec3 redLightPosition = ew::Vec3(1.0f, 2.0f, 0.0f);
+	ew::Transform redLightTransform;
+	redLightTransform.position = redLightPosition;
+
+	ew::Vec3 defaultLightColor = ew::Vec3(1.0,1.0,1.0);
+	Light defaultLight;
+	defaultLight.color = defaultLightColor;
+	defaultLight.position = defaultLightPosition;
+
+	ew::Vec3 redLightColor = ew::Vec3(1.0,0.0,0.0);
+	Light redLight; 
+	redLight.color = redLightColor;
+	redLight.position = redLightPosition;
+
+	//Need to create an array of colors and positions to swap out in the render loop
+	
+
+	Material material;
+	material.ambientK = 0.1;
+	material.shininess = 32;
+	material.specular = 0.5;
+	material.diffuseK = 1.0;
 
 	resetCamera(camera,cameraController);
 
@@ -111,7 +157,24 @@ int main() {
 		shader.setMat4("_Model", cylinderTransform.getModelMatrix());
 		cylinderMesh.draw();
 
+		shader.setVec3("_Light.position", defaultLightPosition);
+		shader.setVec3("_Light.color", defaultLightColor);
+		shader.setFloat("_AmbientStrength", material.ambientK);
+		shader.setFloat("_SpecularStrength", material.specular);
+		shader.setFloat("_Shininess", material.shininess);
+		shader.setFloat("_DiffuseStrength", material.diffuseK);
+
+		shader.setVec3("_ViewPos", camera.position);
+
 		//TODO: Render point lights
+		unlitShader.use();
+		unlitShader.setMat4("_ViewProjection", camera.ProjectionMatrix() * camera.ViewMatrix());
+		unlitShader.setMat4("_Model", sphereLightTransform.getModelMatrix());
+		unlitShader.setVec3("_Color",defaultLightColor);
+		sphereLightMesh.draw();
+		unlitShader.setMat4("_Model", redLightTransform.getModelMatrix());
+		unlitShader.setVec3("_Color", redLightColor);
+		red_sphereLightMesh.draw();
 
 		//Render UI
 		{
@@ -140,6 +203,10 @@ int main() {
 			}
 
 			ImGui::ColorEdit3("BG color", &bgColor.x);
+			ImGui::DragFloat("Ambient", &material.ambientK, 0.01f ,0.0f, 1.0f);
+			ImGui::DragFloat("Diffuse", &material.diffuseK, 0.01f, 0.0, 1.0f);
+			ImGui::DragFloat("Specular", &material.specular, 0.01f, 0.0f, 1.0f);
+			ImGui::DragFloat("Shininess", &material.shininess, 1.0f, 0.0f, 256.0f);
 			ImGui::End();
 			
 			ImGui::Render();
